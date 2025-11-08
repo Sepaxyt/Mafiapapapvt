@@ -191,6 +191,7 @@
             padding: 20px;
             border-radius: 15px;
             border-left: 4px solid var(--primary);
+            position: relative;
         }
 
         .section-title {
@@ -202,7 +203,26 @@
             border-bottom: 2px solid var(--primary);
             display: flex;
             align-items: center;
-            gap: 10px;
+            justify-content: space-between;
+        }
+
+        .copy-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 15px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .copy-btn:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
         }
 
         .info-grid {
@@ -295,6 +315,42 @@
             white-space: pre-line;
         }
 
+        .copy-all-btn {
+            background: var(--success);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 12px 20px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0 auto 20px;
+        }
+
+        .copy-all-btn:hover {
+            background: #0da271;
+            transform: translateY(-2px);
+        }
+
+        .copy-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--success);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            gap: 10px;
+        }
+
         @media (max-width: 600px) {
             .container {
                 padding: 10px;
@@ -310,6 +366,12 @@
             
             .logo {
                 font-size: 2.5rem;
+            }
+            
+            .section-title {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
             }
         }
     </style>
@@ -404,6 +466,11 @@
             </div>
             <div>Secure Information Lookup System</div>
         </div>
+    </div>
+
+    <!-- Copy Notification -->
+    <div class="copy-notification" id="copyNotification">
+        <i class="fas fa-check-circle"></i> Copied to clipboard!
     </div>
 
     <script>
@@ -521,6 +588,13 @@
             countEl.innerHTML = `<i class="fas fa-database"></i> ${results.length} Records Found`;
             result.appendChild(countEl);
 
+            // Add "Copy All" button
+            const copyAllBtn = document.createElement('button');
+            copyAllBtn.className = 'copy-all-btn';
+            copyAllBtn.innerHTML = `<i class="fas fa-copy"></i> Copy All Information`;
+            copyAllBtn.onclick = () => copyAllInformation(results);
+            result.appendChild(copyAllBtn);
+
             // Display each record
             results.forEach((record, index) => {
                 const recordSection = document.createElement('div');
@@ -528,7 +602,12 @@
                 
                 const title = document.createElement('div');
                 title.className = 'section-title';
-                title.innerHTML = `<i class="fas fa-user"></i> Record ${index + 1}/${results.length}`;
+                title.innerHTML = `
+                    <span><i class="fas fa-user"></i> Record ${index + 1}/${results.length}</span>
+                    <button class="copy-btn" onclick="copyRecord(${index})">
+                        <i class="fas fa-copy"></i> Copy
+                    </button>
+                `;
                 recordSection.appendChild(title);
 
                 const infoGrid = document.createElement('div');
@@ -607,6 +686,9 @@
                 result.appendChild(recordSection);
             });
 
+            // Store results for copying
+            window.phoneResults = results;
+
             // Powered by
             const poweredBy = document.createElement('div');
             poweredBy.className = 'footer';
@@ -619,6 +701,84 @@
 
             result.style.display = 'block';
             result.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Copy a single record
+        function copyRecord(index) {
+            const record = window.phoneResults[index];
+            let textToCopy = `Record ${index + 1}/${window.phoneResults.length}\n`;
+            textToCopy += `Mobile Number: ${record.mobile || 'N/A'}\n`;
+            textToCopy += `Full Name: ${record.name || 'N/A'}\n`;
+            textToCopy += `Father's Name: ${record.father_name || 'N/A'}\n`;
+            textToCopy += `Circle: ${record.circle || 'N/A'}\n`;
+            textToCopy += `ID Number: ${record.id_number || 'N/A'}\n`;
+            
+            if (record.alt_mobile && record.alt_mobile !== '') {
+                textToCopy += `Alternative Mobile: ${record.alt_mobile}\n`;
+            }
+            
+            if (record.email && record.email !== '') {
+                textToCopy += `Email: ${record.email}\n`;
+            }
+            
+            if (record.address) {
+                textToCopy += `Address: ${record.address.replace(/!/g, '\n')}\n`;
+            }
+            
+            copyToClipboard(textToCopy);
+            showCopyNotification();
+        }
+
+        // Copy all information
+        function copyAllInformation(results) {
+            let textToCopy = `Phone Lookup Results for ${document.getElementById('phoneNumber').value}\n`;
+            textToCopy += `Total Records: ${results.length}\n\n`;
+            
+            results.forEach((record, index) => {
+                textToCopy += `Record ${index + 1}/${results.length}\n`;
+                textToCopy += `Mobile Number: ${record.mobile || 'N/A'}\n`;
+                textToCopy += `Full Name: ${record.name || 'N/A'}\n`;
+                textToCopy += `Father's Name: ${record.father_name || 'N/A'}\n`;
+                textToCopy += `Circle: ${record.circle || 'N/A'}\n`;
+                textToCopy += `ID Number: ${record.id_number || 'N/A'}\n`;
+                
+                if (record.alt_mobile && record.alt_mobile !== '') {
+                    textToCopy += `Alternative Mobile: ${record.alt_mobile}\n`;
+                }
+                
+                if (record.email && record.email !== '') {
+                    textToCopy += `Email: ${record.email}\n`;
+                }
+                
+                if (record.address) {
+                    textToCopy += `Address: ${record.address.replace(/!/g, '\n')}\n`;
+                }
+                
+                textToCopy += '\n';
+            });
+            
+            copyToClipboard(textToCopy);
+            showCopyNotification();
+        }
+
+        // Copy text to clipboard
+        function copyToClipboard(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+        }
+
+        // Show copy notification
+        function showCopyNotification() {
+            const notification = document.getElementById('copyNotification');
+            notification.style.display = 'flex';
+            
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
         }
 
         // Show Error
